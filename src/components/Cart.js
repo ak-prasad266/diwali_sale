@@ -1,10 +1,23 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
-const Cart = ({ cart }) => {
+const Cart = () => {
+  const [cart, setCart] = useState([]);
   const [selected, setSelected] = useState([]);
-  const [quantities, setQuantities] = useState(
-    cart.reduce((acc, item) => ({ ...acc, [item.id]: 1 }), {})
-  );
+  const [quantities, setQuantities] = useState({});
+
+  // Fetch cart data from Django backend
+  useEffect(() => {
+    fetch("http://127.0.0.1:8000/api/cart/")
+      .then((res) => res.json())
+      .then((data) => {
+        setCart(data.cart);
+        // Initialize quantities
+        const qtyMap = {};
+        data.cart.forEach((item) => (qtyMap[item.id] = item.quantity || 1));
+        setQuantities(qtyMap);
+      })
+      .catch((err) => console.error("Error fetching cart:", err));
+  }, []);
 
   // Handle select/unselect
   const handleCheck = (id) => {
@@ -65,13 +78,6 @@ const Cart = ({ cart }) => {
           ))}
           <h3>Total Amount: ₹{total}</h3>
           <button disabled={total === 0}>Pay Now</button>
-          <button
-            onClick={() =>
-              localStorage.removeItem("cart") || window.location.reload()
-            }
-          >
-            Clear Cart
-          </button>
         </div>
       )}
     </div>
